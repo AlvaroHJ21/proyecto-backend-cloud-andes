@@ -1,0 +1,31 @@
+const { checkConnection } = require("../database/connection");
+
+function health(req, res) {
+  res.json({
+    status: "ok",
+    service: "taskflow-api",
+    timestamp: new Date().toISOString()
+  });
+}
+
+async function databaseHealth(req, res) {
+  try {
+    await checkConnection();
+    res.json({
+      status: "ok",
+      service: "taskflow-mysql"
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: "error",
+      service: "taskflow-mysql",
+      code: error.code,
+      message: error.message
+    });
+  }
+}
+
+module.exports = {
+  databaseHealth,
+  health
+};
