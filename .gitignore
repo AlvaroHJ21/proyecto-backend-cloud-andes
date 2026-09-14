@@ -1,2 +1,6 @@
+# Configuración privada; conservamos únicamente la plantilla sin secretos.
 .env
+.env.*
+!.env.example
+# Dependencias instaladas localmente; se reconstruyen desde package-lock.json.
 /node_modules

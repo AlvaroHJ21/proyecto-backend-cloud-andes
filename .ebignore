@@ -1,0 +1,12 @@
+# Dependencias locales; Elastic Beanstalk las instala usando package-lock.json.
+node_modules/
+# Configuración privada; las variables se crean en el entorno de Beanstalk.
+.env
+.env.*
+!.env.example
+# Metadatos y archivos de desarrollo que no necesita la aplicación desplegada.
+.git/
+.gitignore
+.dockerignore
+Dockerfile
+npm-debug.log*

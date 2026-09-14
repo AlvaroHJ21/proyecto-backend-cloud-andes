@@ -1,0 +1,90 @@
+# TaskFlow — Backend
+
+API REST con Node.js, Express, JWT y MySQL. Gestiona autenticación, perfil y tareas
+asociadas a cada usuario. Este repositorio se despliega de manera independiente.
+
+## Arquitectura prevista
+
+Frontend en Amplify → API HTTPS en Elastic Beanstalk → MySQL en RDS.
+Actualizaciones: GitHub, rama `main` → CodePipeline Source → Deploy en Beanstalk.
+El despliegue en AWS está pendiente de configurar y verificar.
+
+## Desarrollo local
+
+Se necesita una base MySQL existente y accesible. El backend crea las tablas al
+arrancar, pero no crea la base de datos.
+
+```bash
+# Instala las versiones fijadas en package-lock.json.
+npm ci
+# Crea la configuración local; ejecutar solo si todavía no existe .env.
+cp .env.example .env
+# Inicia Node con reinicio automático ante cambios de código.
+npm run dev
+```
+
+Completa las variables de `.env` usando la plantilla comentada `.env.example`.
+Para ejecutar sin el modo de desarrollo se utiliza `npm start`.
+
+En Docker Compose, el backend conecta a MySQL mediante `db:3306`. Ese nombre
+pertenece a la red interna de Docker y no se resuelve desde un proceso Node en el
+equipo anfitrión. El Compose común no publica el puerto de MySQL.
+
+## Organización del código
+
+Rutas → middleware de autenticación → controladores → servicios → modelos → MySQL.
+
+- `routes/`: define los endpoints y su protección.
+- `controllers/`: transforma solicitudes y resultados en respuestas HTTP.
+- `services/`: valida datos y aplica las reglas de negocio.
+- `models/`: ejecuta SQL parametrizado y limita las tareas al usuario autenticado.
+- `database/`: pool de conexiones, creación de tablas y datos iniciales.
+
+## Endpoints
+
+| Método y ruta | Propósito |
+| --- | --- |
+| `POST /api/auth/login` | Iniciar sesión y obtener un JWT |
+| `GET /api/auth/me` | Recuperar el usuario autenticado |
+| `GET /api/profile` | Consultar el perfil |
+| `PUT /api/profile` | Actualizar nombre y correo |
+| `GET /api/tasks` | Consultar tareas y resumen |
+| `POST /api/tasks` | Crear una tarea |
+| `PUT /api/tasks/:id` | Editar una tarea o su estado |
+| `DELETE /api/tasks/:id` | Eliminar una tarea |
+| `GET /api/health` | Comprobar que Express responde |
+| `GET /api/health/database` | Comprobar conexión con MySQL |
+
+Las rutas de perfil, tareas y `/auth/me` requieren `Authorization: Bearer <token>`.
+El health check del proceso puede responder correctamente aunque MySQL no esté
+disponible. El de base de datos comprueba conectividad, no la existencia de tablas.
+
+## Configuración y datos iniciales
+
+En Beanstalk, las variables se configurarán en el entorno; `.env` no se publica.
+Usar un `JWT_SECRET` propio y credenciales de base de datos del entorno.
+
+Las variables `TASKFLOW_ADMIN_*` se aplican únicamente al crear el usuario inicial
+cuando la tabla `users` está vacía. Cambiarlas después no actualiza ese usuario.
+
+## Preparación para Elastic Beanstalk
+
+`Procfile` declara `web: npm start`: `web` identifica el proceso HTTP y
+`npm start` ejecuta `src/server.js`. El archivo no admite comentarios en la misma
+línea, por eso se documenta aquí.
+
+`.ebignore` excluye dependencias, Git, Docker y archivos `.env` del paquete que
+Elastic Beanstalk recibe. Se conserva `.env.example` porque solo contiene nombres
+y ejemplos de configuración.
+
+`.ebextensions/healthcheck.config` configura `/api/health` como comprobación HTTP.
+Ese endpoint confirma que Express responde y permite diagnosticar la conexión con
+RDS por separado mediante `/api/health/database`.
+
+## Verificación local realizada
+
+Login, sesión, consulta y actualización de perfil, creación, edición, consulta y
+eliminación de una tarea temporal. La tarea sobrevivió al reinicio de MySQL y del
+backend; se eliminó al terminar la prueba. Persistencia local mediante `db_data`.
+
+Endpoint público de Beanstalk y evidencia de CodePipeline: pendientes.
