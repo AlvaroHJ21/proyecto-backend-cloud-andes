@@ -1,5 +1,5 @@
 const bcrypt = require("bcryptjs");
-const { execute } = require("./connection");
+const { ensureDatabase, execute } = require("./connection");
 const env = require("../config/env");
 
 async function createSchema() {
@@ -58,6 +58,8 @@ async function seedDemoUser() {
 }
 
 async function initDatabase() {
+  // RDS puede existir sin DBName; primero garantiza la base configurada en DB_NAME.
+  await ensureDatabase();
   await createSchema();
   await seedDemoUser();
 }

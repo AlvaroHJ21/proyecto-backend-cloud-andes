@@ -19,6 +19,47 @@ function isDatabaseConfigured() {
   return Boolean(host && name && user && password);
 }
 
+function validateDatabaseName() {
+  // Los identificadores SQL no aceptan placeholders; limitamos el valor a caracteres seguros.
+  if (!/^[A-Za-z0-9_]+$/.test(env.database.name)) {
+    throw new DatabaseUnavailableError(
+      new Error("DB_NAME solo puede contener letras, números y guion bajo.")
+    );
+  }
+}
+
+async function ensureDatabase() {
+  if (!isDatabaseConfigured()) {
+    throw new DatabaseUnavailableError(
+      new Error("Faltan las variables DB_HOST, DB_NAME, DB_USER o DB_PASSWORD.")
+    );
+  }
+
+  validateDatabaseName();
+  let connection;
+
+  try {
+    // Esta conexión no selecciona database porque RDS puede haberse creado sin una base inicial.
+    connection = await mysql.createConnection({
+      host: env.database.host,
+      port: env.database.port,
+      user: env.database.user,
+      password: env.database.password,
+      connectTimeout: 5000,
+      // DB_SSL activa TLS cuando el entorno de RDS lo requiera.
+      ...(env.database.ssl ? { ssl: { rejectUnauthorized: true } } : {})
+    });
+    // IF NOT EXISTS permite repetir el arranque sin borrar ni reemplazar datos existentes.
+    await connection.query(
+      `CREATE DATABASE IF NOT EXISTS \`${env.database.name}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`
+    );
+  } catch (error) {
+    throw asDatabaseError(error);
+  } finally {
+    await connection?.end();
+  }
+}
+
 function getPool() {
   if (!isDatabaseConfigured()) {
     throw new DatabaseUnavailableError(
@@ -74,6 +115,7 @@ async function checkConnection() {
 
 module.exports = {
   checkConnection,
+  ensureDatabase,
   execute,
   isDatabaseConfigured
 };

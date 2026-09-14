@@ -11,8 +11,8 @@ El despliegue en AWS está pendiente de configurar y verificar.
 
 ## Desarrollo local
 
-Se necesita una base MySQL existente y accesible. El backend crea las tablas al
-arrancar, pero no crea la base de datos.
+Se necesita una instancia MySQL accesible. Al arrancar, el backend crea la base
+indicada por `DB_NAME` si todavía no existe y después crea sus tablas.
 
 ```bash
 # Instala las versiones fijadas en package-lock.json.
@@ -66,6 +66,10 @@ Usar un `JWT_SECRET` propio y credenciales de base de datos del entorno.
 
 Las variables `TASKFLOW_ADMIN_*` se aplican únicamente al crear el usuario inicial
 cuando la tabla `users` está vacía. Cambiarlas después no actualiza ese usuario.
+El usuario de `DB_USER` necesita inicialmente permiso `CREATE` porque una instancia
+RDS puede haberse creado con `DBName` vacío. `CREATE DATABASE IF NOT EXISTS` conserva
+la información en reinicios y despliegues posteriores. El nombre se valida antes
+de interpolarlo porque los identificadores SQL no admiten parámetros `?`.
 
 ## Preparación para Elastic Beanstalk
 
