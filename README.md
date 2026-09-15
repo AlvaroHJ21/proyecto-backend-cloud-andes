@@ -3,11 +3,18 @@
 API REST con Node.js, Express, JWT y MySQL. Gestiona autenticación, perfil y tareas
 asociadas a cada usuario. Este repositorio se despliega de manera independiente.
 
-## Arquitectura prevista
+## Arquitectura desplegada
 
-Frontend en Amplify → API HTTPS en Elastic Beanstalk → MySQL en RDS.
+Frontend en Amplify → API Gateway HTTPS → Elastic Beanstalk → MySQL en RDS.
 Actualizaciones: GitHub, rama `main` → CodePipeline Source → Deploy en Beanstalk.
-El despliegue en AWS está pendiente de configurar y verificar.
+
+- Frontend: https://alvarohj.tech
+- API: https://api.alvarohj.tech/api
+- Health check: https://api.alvarohj.tech/api/health
+
+API Gateway entrega HTTPS con el certificado de ACM y reenvía las solicitudes al
+entorno de Elastic Beanstalk. CORS permite los orígenes del frontend con y sin
+`www`.
 
 ## Desarrollo local
 
@@ -61,7 +68,7 @@ disponible. El de base de datos comprueba conectividad, no la existencia de tabl
 
 ## Configuración y datos iniciales
 
-En Beanstalk, las variables se configurarán en el entorno; `.env` no se publica.
+En Beanstalk, las variables se configuran en el entorno; `.env` no se publica.
 Usar un `JWT_SECRET` propio y credenciales de base de datos del entorno.
 
 Las variables `TASKFLOW_ADMIN_*` se aplican únicamente al crear el usuario inicial
@@ -91,4 +98,9 @@ Login, sesión, consulta y actualización de perfil, creación, edición, consul
 eliminación de una tarea temporal. La tarea sobrevivió al reinicio de MySQL y del
 backend; se eliminó al terminar la prueba. Persistencia local mediante `db_data`.
 
-Endpoint público de Beanstalk y evidencia de CodePipeline: pendientes.
+En AWS se verificaron login, perfil, creación, edición y cambio de estado de tareas.
+Los datos permanecieron en RDS después de recargar el frontend.
+
+CodePipeline quedó conectado al repositorio mediante GitHub App. Un `push` a
+`main` inicia automáticamente las etapas `Source` y `Deploy`; Elastic Beanstalk
+recibe `SourceArtifact` directamente, sin una etapa CodeBuild.
