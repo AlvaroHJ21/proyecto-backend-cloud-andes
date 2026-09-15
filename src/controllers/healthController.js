@@ -3,8 +3,8 @@ const { checkConnection } = require("../database/connection");
 function health(req, res) {
   res.json({
     status: "ok",
-    service: "taskflow-api-v2",
-    timestamp: new Date().toISOString()
+    service: "taskflow-api-v3",
+    timestamp: new Date().toISOString(),
   });
 }
 
@@ -13,19 +13,19 @@ async function databaseHealth(req, res) {
     await checkConnection();
     res.json({
       status: "ok",
-      service: "taskflow-mysql-v2"
+      service: "taskflow-mysql-v2",
     });
   } catch (error) {
     res.status(500).json({
       status: "error",
       service: "taskflow-mysql-v2",
       code: error.code,
-      message: error.message
+      message: error.message,
     });
   }
 }
 
 module.exports = {
   databaseHealth,
-  health
+  health,
 };
