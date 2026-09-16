@@ -3,7 +3,7 @@ const { checkConnection } = require("../database/connection");
 function health(req, res) {
   res.json({
     status: "ok",
-    service: "taskflow-api-v3",
+    service: "taskflow-api-v4",
     timestamp: new Date().toISOString(),
   });
 }
